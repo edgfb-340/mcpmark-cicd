@@ -1,0 +1,34 @@
+name: Debug Workflow
+
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  debug:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Debug information
+        run: |
+          echo "Event name: ${{ github.event_name }}"
+          echo "Issue number: ${{ github.event.issue.number }}"
+          echo "Issue title: ${{ github.event.issue.title }}"
+          echo "Issue body: ${{ github.event.issue.body }}"
+          echo "Labels: ${{ toJSON(github.event.issue.labels) }}"
+
+      - name: Add debug label
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { issue, repo, github } = context;
+            await github.rest.issues.addLabels({
+              owner: repo.owner,
+              repo: repo.repo,
+              issue_number: issue.number,
+              labels: ['debug']
+            });

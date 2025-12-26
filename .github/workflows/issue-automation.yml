@@ -17,14 +17,14 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const { issue } = context;
+            const { issue, repo, github } = context;
             const title = issue.title.toLowerCase();
             const body = issue.body ? issue.body.toLowerCase() : '';
             
             // Add initial needs-triage label
             await github.rest.issues.addLabels({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
+              owner: repo.owner,
+              repo: repo.repo,
               issue_number: issue.number,
               labels: ['needs-triage']
             });
@@ -41,8 +41,8 @@ jobs:
             
             if (categoryLabel) {
               await github.rest.issues.addLabels({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
+                owner: repo.owner,
+                repo: repo.repo,
                 issue_number: issue.number,
                 labels: [categoryLabel]
               });
@@ -66,8 +66,8 @@ jobs:
             }
             
             await github.rest.issues.addLabels({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
+              owner: repo.owner,
+              repo: repo.repo,
               issue_number: issue.number,
               labels: [priorityLabel]
             });
@@ -86,7 +86,7 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const { issue } = context;
+            const { issue, repo, github } = context;
             const originalTitle = issue.title;
             const parentNumber = issue.number;
             
@@ -105,8 +105,8 @@ jobs:
               const subtaskBody = `Related to #${parentNumber}`;
               
               const response = await github.rest.issues.create({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
+                owner: repo.owner,
+                repo: repo.repo,
                 title: subtaskTitle,
                 body: subtaskBody,
                 labels: ['enhancement', 'needs-review']
@@ -120,8 +120,8 @@ jobs:
             const newBody = issue.body ? `${issue.body}\n\n## Epic Tasks\n${checklist}` : `## Epic Tasks\n${checklist}`;
             
             await github.rest.issues.update({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
+              owner: repo.owner,
+              repo: repo.repo,
               issue_number: parentNumber,
               body: newBody
             });
@@ -139,14 +139,14 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const { issue } = context;
+            const { issue, repo, github } = context;
             const author = issue.user.login;
             const labels = issue.labels.map(label => label.name);
             
             // Check if first time contributor in this repo
             const issuesByAuthor = await github.rest.issues.listForRepo({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
+              owner: repo.owner,
+              repo: repo.repo,
               creator: author,
               state: 'all'
             });
@@ -155,8 +155,8 @@ jobs:
             
             if (isFirstTime) {
               await github.rest.issues.addLabels({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
+                owner: repo.owner,
+                repo: repo.repo,
                 issue_number: issue.number,
                 labels: ['first-time-contributor']
               });
@@ -180,8 +180,8 @@ jobs:
             // Post comment
             if (response) {
               await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
+                owner: repo.owner,
+                repo: repo.repo,
                 issue_number: issue.number,
                 body: response
               });
@@ -191,31 +191,31 @@ jobs:
             if (labels.includes('priority-high') || labels.includes('priority-critical')) {
               // Check if milestone exists
               const milestones = await github.rest.issues.listMilestones({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
+                owner: repo.owner,
+                repo: repo.repo,
                 state: 'open'
               });
               
               const v1Milestone = milestones.data.find(m => m.title === 'v1.0.0');
               if (v1Milestone) {
                 await github.rest.issues.update({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
+                  owner: repo.owner,
+                  repo: repo.repo,
                   issue_number: issue.number,
                   milestone: v1Milestone.number
                 });
               } else {
                 // Create milestone if it doesn't exist
                 const newMilestone = await github.rest.issues.createMilestone({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
+                  owner: repo.owner,
+                  repo: repo.repo,
                   title: 'v1.0.0',
                   state: 'open'
                 });
                 
                 await github.rest.issues.update({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
+                  owner: repo.owner,
+                  repo: repo.repo,
                   issue_number: issue.number,
                   milestone: newMilestone.data.number
                 });
@@ -224,15 +224,15 @@ jobs:
             
             // Update status from needs-triage to needs-review
             await github.rest.issues.removeLabel({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
+              owner: repo.owner,
+              repo: repo.repo,
               issue_number: issue.number,
               name: 'needs-triage'
             });
             
             await github.rest.issues.addLabels({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
+              owner: repo.owner,
+              repo: repo.repo,
               issue_number: issue.number,
               labels: ['needs-review']
             });
